@@ -30,6 +30,7 @@ bir arada tutulan duzenli bir muhendislik deposu olarak kurgulandi.
 | Baffle temel raporu | Taslak / donusturulmus not | [`docs/baffle_WO_vanes_rapor.md`](./docs/baffle_WO_vanes_rapor.md) | [`pdf/baffle_WO_vanes_rapor.pdf`](./pdf/baffle_WO_vanes_rapor.pdf) |
 | Baffle aciklama notu | Yardimci not | [`docs/baffle_raporu_hakkinda.md`](./docs/baffle_raporu_hakkinda.md) | - |
 | CMOS APS / PPD star tracker notu | Duzenlenmis teknik not | [`docs/CMOS_APS_PPD_star_tracker.md`](./docs/CMOS_APS_PPD_star_tracker.md) | [`pdf/CMOS_APS_PPD_star_tracker.pdf`](./pdf/CMOS_APS_PPD_star_tracker.pdf) |
+| Fotodiyot lab raporu | Duzenlenmis teknik not | [`docs/Fotodiyot_Lab_Raporu.md`](./docs/Fotodiyot_Lab_Raporu.md) | [`pdf/Fotodiyot_Lab_Raporu.pdf`](./pdf/Fotodiyot_Lab_Raporu.pdf) |
 
 Detayli belge listesi icin: [`docs/README.md`](./docs/README.md)
 
