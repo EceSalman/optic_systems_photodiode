@@ -1,0 +1,31 @@
+PC'den HDMI çıkışı alıp bilinmeyen özellikte bir HDMI→MIPI köprü kartı (bridge board) üzerinden mikro OLED'e ileten bir kurulumunuz var. Bu, işi biraz karmaşıklaştırıyor çünkü kritik bir belirsizlik var:
+Asıl bilinmeyen: köprü kartı, gelen frame rate'i olduğu gibi mi geçiriyor, yoksa panelin sabit native hızına mı çeviriyor?
+Birçok HDMI-MIPI köprü çipi (Lontium LT6911/LT8618, Toshiba TC358870 gibi) frame buffer içerir ve gelen HDMI sinyalini, panelin kendi sabit iç yenileme hızına (native refresh) göre yeniden örnekler (frame rate conversion). Yani PC'den 50, 60, 90 Hz gönderseniz bile, panel fiziksel olarak hep aynı sabit hızda taranıyor olabilir — bu durumda PC ayarınız gerçek panel davranışını değil, sadece giriş sinyalini değiştirir.
+NOT: Bizim elimizdeki kart da iddiasına göre bu şekilde çıkış yenileme frekansını sabitliyor. Şu an 60 Hz ayarında sürüyoruz ancak ileride, iddiaları katıtlamak için 75 ve 90 Hz gibi değerlerde de test edilecek.
+Fotodiyot + osiloskop ölçümünüz, PC ayarından bağımsız olarak "gerçek" panel davranışını gösterecek.
+
+Test Metodolojisi:
+1. PC tarafında mevcut refresh rate seçeneklerini kontrol edin
+İşletim sisteminin ekran ayarlarında (Windows: Görüntü Ayarları → Gelişmiş, veya NVIDIA/AMD kontrol paneli; Linux: xrandr) köprü kartının EDID üzerinden bildirdiği desteklenen modları listeleyin. 50/60/90 Hz orada yoksa, Windows'ta CRU (Custom Resolution Utility) ile veya Linux'ta xrandr --newmode ile zorlamayı deneyebilirsiniz — ama köprü çipi kabul etmeyebilir.
+Not: 60 Hz test edilecek dolayısıyla şimdilik geçebilirsiniz.
+2. Her frekansta tam ekran flaşlama içeriği üretin
+requestAnimationFrame (rAF) tabanlı bir web sayfası, GPU'nun gerçek çıkış vsync'ine senkronize çalışır — bu yüzden PC'nin o an çıkardığı gerçek frame rate'i takip eder. 
+3. Nyquist noktasını unutmayın
+Her kareyi alternatif yaparsanız (1 beyaz-1 siyah), ölçülen flicker frekansı = çıkış frame rate / 2 olur. 60 Hz çıkışta tam kare alternasyonu 30 Hz flicker verir.
+
+Test Adımları:
+Dosyayı, OLED'e HDMI çıkışı veren PC'de bir tarayıcıda açın (indirip çift tıklayarak).
+F tuşuyla tam ekrana geçin (ekranı gerçekten dolduran flaşlama önemli — kenarlarda kalan içerik ölçümü bozar).
+1-9 tuşlarıyla alternasyon periyodunu (N) ayarlayın:
+
+N=1: her kare renk değiştirir → flicker frekansı = gerçek çıkış hızı / 2
+N=2: her 2 karede bir değişir → flicker frekansı = çıkış hızı / 4, vb.
+
+
+Sol üstteki panel, requestAnimationFrame zaman damgalarından hesaplanan gerçek ölçülen ekran hızını ve beklenen flicker frekansını gösterir — bu size PC'nin GPU'dan gerçekte kaç Hz çıkardığını, işletim sistemi ayarından bağımsız olarak doğrular.
+Fotodiyot + osiloskop ile ölçtüğünüz frekansı, HUD panelindeki "beklenen flicker frekansı" ile karşılaştırın.
+
+Eğer:
+Fotodiyot frekansı HUD'daki beklenen değerle örtüşüyorsa → köprü kartı sinyali şeffaf (pass-through) geçiriyor, panel gerçekten o hızda çalışıyor.
+Fotodiyot frekansı sabit kalıyor, PC ayarından etkilenmiyorsa → köprü kartı iç tampon belleği (frame buffer) ile frame rate dönüşümü yapıyor ve panel sabit bir native hızda çalışıyor; bu sizin panelinizin gerçek yenileme hızı limitini doğrudan gösterir.
+Yüksek hızlarda modülasyon derinliği (osiloskopta sinyal genliği) düşüyorsa → panel o hıza kısmen yetişiyor ama tam kontrast geçişi yapamıyor, bu da pratik bir üst sınır işaretidir.

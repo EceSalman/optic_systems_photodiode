@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>OLED Yenileme Hızı Flaşlama Testi</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #000; overflow: hidden;
+    font-family: -apple-system, Arial, sans-serif;
+  }
+  #flash {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #000;
+  }
+  #hud {
+    position: fixed; top: 12px; left: 12px;
+    background: rgba(0,0,0,0.7); color: #0f0;
+    padding: 10px 14px; border-radius: 6px;
+    font-size: 14px; line-height: 1.6; z-index: 10;
+    pointer-events: none; white-space: pre;
+  }
+  #hud.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="flash"></div>
+<div id="hud"></div>
+
+<script>
+const flashEl = document.getElementById('flash');
+const hud = document.getElementById('hud');
+
+// N: kaç kare boyunca ayni renk kalinacak (alternasyon periyodu).
+// N=1 -> her kare degisir (maksimum flicker = frameRate/2)
+// N=2 -> her 2 karede bir degisir (flicker = frameRate/4), vs.
+let N = 1;
+let frameCount = 0;
+let isWhite = false;
+
+// Gercek ekran yenileme hizini olcmek icin rAF zaman damgalari
+let lastTimestamps = [];
+const MAX_SAMPLES = 60;
+
+let showHud = true;
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(()=>{});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key >= '1' && e.key <= '9') {
+    N = parseInt(e.key, 10);
+    frameCount = 0;
+  }
+  if (e.key === 'f' || e.key === 'F') {
+    toggleFullscreen();
+  }
+  if (e.key === 'i' || e.key === 'I') {
+    showHud = !showHud;
+    hud.classList.toggle('hidden', !showHud);
+  }
+});
+
+document.addEventListener('click', toggleFullscreen);
+
+function loop(ts) {
+  lastTimestamps.push(ts);
+  if (lastTimestamps.length > MAX_SAMPLES) lastTimestamps.shift();
+
+  frameCount++;
+  if (frameCount >= N) {
+    frameCount = 0;
+    isWhite = !isWhite;
+    flashEl.style.background = isWhite ? '#fff' : '#000';
+  }
+
+  if (showHud && lastTimestamps.length > 2) {
+    const deltas = [];
+    for (let i = 1; i < lastTimestamps.length; i++) {
+      deltas.push(lastTimestamps[i] - lastTimestamps[i-1]);
+    }
+    const avgDelta = deltas.reduce((a,b)=>a+b,0) / deltas.length;
+    const measuredFps = 1000 / avgDelta;
+    const flickerFreq = measuredFps / (2 * N);
+
+    hud.textContent =
+`Olculen ekran hizi: ${measuredFps.toFixed(2)} Hz
+Alternasyon periyodu (N): ${N} kare
+Beklenen flicker frekansi: ${flickerFreq.toFixed(2)} Hz
+
+Tuslar:
+ 1-9  = N degerini ayarla
+ F    = tam ekran ac/kapa
+ I    = bu paneli gizle/goster`;
+  }
+
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
